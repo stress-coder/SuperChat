@@ -1,0 +1,3 @@
+#!/bin/sh
+(cd backend && pnpm exec lint-staged --relative --config package.json) || exit 1
+(cd frontend && pnpm exec lint-staged --relative --config package.json) || exit 1
