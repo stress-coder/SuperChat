@@ -47,7 +47,6 @@ Closes #(issue number)
 <!-- Put an x inside the [ ] to check it. All must be checked before requesting review -->
 
 ### General
-- [ ] My code follows the standards in `RULES.md`
 - [ ] My branch name follows the convention (`feature/*`, `bugfix/*`, `hotfix/*`)
 - [ ] My commit messages follow Conventional Commits (`feature:`, `fix:`, `chore:`)
 - [ ] I have tested this locally and it works
