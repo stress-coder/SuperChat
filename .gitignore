@@ -3,3 +3,11 @@ node_modules/
 .env
 dist/
 build/
+
+# Docker — local compose file is gitignored; use docker-compose.example.yml as reference
+docker-compose.yml
+
+# SSL certificates — generated locally with mkcert, never committed
+frontend/.docker/ssl/*.crt
+frontend/.docker/ssl/*.key
+backend/node_modules/

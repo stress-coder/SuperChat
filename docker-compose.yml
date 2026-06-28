@@ -1,1 +1,136 @@
 services:
+
+  # ──────────────────────────────────────────────────
+  # MySQL 8.0 — persistent relational database
+  # ──────────────────────────────────────────────────
+  mysql-superchat:
+    image: mysql:8.0
+    container_name: superchat-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - superchat-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────
+  # Backend — NestJS with hot reload (nest start --watch)
+  # src/ is volume-mounted — code changes recompile immediately.
+  # DB_HOST is hardcoded to the MySQL service name — Docker DNS resolves it.
+  # ──────────────────────────────────────────────────
+  backend-superchat:
+    build:
+      context: ./backend
+      dockerfile: .docker/Dockerfile
+      target: development
+      args:
+        NODE_VERSION: ${NODE_VERSION:-22}
+    container_name: superchat-backend
+    volumes:
+      - ./backend/src:/app/src
+    environment:
+      PORT: ${PORT:-3000}
+      DB_HOST: mysql-superchat
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+    ports:
+      - "${BACKEND_HOST_PORT:-3000}:3000"
+    depends_on:
+      mysql-superchat:
+        condition: service_healthy
+    networks:
+      - superchat-net
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────
+  # Frontend — Vite dev server with HMR
+  # src/ is volume-mounted — browser hot-reloads on every save.
+  # No host ports: nginx-superchat proxies all browser traffic here.
+  # DOCKER_DEV=true tells vite.config.ts to route HMR through nginx (wss:443).
+  # ──────────────────────────────────────────────────
+  frontend-superchat:
+    build:
+      context: ./frontend
+      dockerfile: .docker/Dockerfile
+      target: development
+      args:
+        NODE_VERSION: ${NODE_VERSION:-22}
+    container_name: superchat-frontend
+    volumes:
+      - ./frontend/src:/app/src
+    environment:
+      DOCKER_DEV: "true"
+    networks:
+      - superchat-net
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────
+  # Nginx — TLS terminator + reverse proxy (dev)
+  # Routes superchat.test → Vite dev server + NestJS backend.
+  # Requires "127.0.0.1 superchat.test" in /etc/hosts.
+  # ──────────────────────────────────────────────────
+  nginx-superchat:
+    image: nginx:alpine
+    container_name: superchat-nginx
+    volumes:
+      - ./frontend/.docker/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend/.docker/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - frontend-superchat
+      - backend-superchat
+    networks:
+      - superchat-net
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────
+  # phpMyAdmin — MySQL web UI
+  # Access: http://localhost:${PMA_HOST_PORT}
+  # ──────────────────────────────────────────────────
+  phpmyadmin-superchat:
+    image: phpmyadmin:latest
+    container_name: superchat-pma
+    environment:
+      PMA_HOST: mysql-superchat
+      PMA_PORT: 3306
+    ports:
+      - "${PMA_HOST_PORT:-8080}:80"
+    networks:
+      - superchat-net
+    depends_on:
+      mysql-superchat:
+        condition: service_healthy
+    restart: unless-stopped
+
+# ──────────────────────────────────────────────────
+# Named volumes — data persists across container restarts.
+# Run "make reset" to destroy volumes (full reset).
+# ──────────────────────────────────────────────────
+volumes:
+  mysql-data:
+
+# ──────────────────────────────────────────────────
+# Custom bridge network — Docker DNS resolves service names between containers.
+# ──────────────────────────────────────────────────
+networks:
+  superchat-net:
+    driver: bridge

@@ -1,5 +1,35 @@
+# Dependencies — never copy to image (installed inside Docker)
 node_modules
-  dist
-  .git
-  .env
-  
+
+# Build output — produced inside Docker
+dist
+
+# Git history
+.git
+.gitignore
+
+# Environment files — secrets must never be baked into images
+.env
+.env.*
+!.env.example
+
+# Test files — not needed in production image
+coverage
+test
+
+# TypeScript incremental build cache from host (can interfere with Docker's own build)
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE and OS files
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Husky hooks — not needed inside container
+.husky

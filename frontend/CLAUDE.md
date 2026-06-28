@@ -1,7 +1,7 @@
 # Frontend Context
 
 ## Tech Stack
-- **Framework:** React 18 + Vite + TypeScript (strict mode)
+- **Framework:** React 19 + Vite + TypeScript (strict mode)
 - **Styling:** Tailwind CSS — no inline styles, ever
 - **State Management:** Zustand
 - **HTTP Client:** Axios — base URL from `VITE_API_URL` env variable
