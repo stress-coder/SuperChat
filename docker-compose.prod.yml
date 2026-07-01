@@ -24,20 +24,18 @@ services:
     restart: unless-stopped
 
   # ──────────────────────────────────────────────────
-  # Backend — NestJS with hot reload (nest start --watch)
-  # src/ is volume-mounted — code changes recompile immediately.
+  # Backend — compiled NestJS (production build)
+  # Not exposed to host — nginx proxies /api/ and /socket.io/ to it.
   # DB_HOST is hardcoded to the MySQL service name — Docker DNS resolves it.
   # ──────────────────────────────────────────────────
   backend-superchat:
     build:
       context: ./backend
       dockerfile: .docker/Dockerfile
-      target: development
+      target: production
       args:
         NODE_VERSION: ${NODE_VERSION:-22}
     container_name: superchat-backend
-    volumes:
-      - ./backend/src:/app/src
     environment:
       PORT: ${PORT:-3000}
       DB_HOST: mysql-superchat
@@ -50,8 +48,6 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
-    ports:
-      - "${BACKEND_HOST_PORT:-3000}:3000"
     depends_on:
       mysql-superchat:
         condition: service_healthy
@@ -60,43 +56,28 @@ services:
     restart: unless-stopped
 
   # ──────────────────────────────────────────────────
-  # Frontend — Vite dev server with HMR
-  # src/ is volume-mounted — browser hot-reloads on every save.
-  # No host ports: nginx-superchat proxies all browser traffic here.
-  # DOCKER_DEV=true tells vite.config.ts to route HMR through nginx (wss:443).
+  # Frontend — React bundle served by nginx (production)
+  # VITE_* vars are baked into the JS bundle at build time — changing them
+  # requires a rebuild: docker compose -f docker-compose.prod.yml up --build
+  # SSL certs are volume-mounted — never baked into the image.
+  # Access: https://superchat.test (add "127.0.0.1 superchat.test" to /etc/hosts)
   # ──────────────────────────────────────────────────
   frontend-superchat:
     build:
       context: ./frontend
       dockerfile: .docker/Dockerfile
-      target: development
+      target: production
       args:
         NODE_VERSION: ${NODE_VERSION:-22}
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
     container_name: superchat-frontend
     volumes:
-      - ./frontend/src:/app/src
-    environment:
-      DOCKER_DEV: "true"
-    networks:
-      - superchat-net
-    restart: unless-stopped
-
-  # ──────────────────────────────────────────────────
-  # Nginx — TLS terminator + reverse proxy (dev)
-  # Routes superchat.test → Vite dev server + NestJS backend.
-  # Requires "127.0.0.1 superchat.test" in /etc/hosts.
-  # ──────────────────────────────────────────────────
-  nginx-superchat:
-    image: nginx:alpine
-    container_name: superchat-nginx
-    volumes:
-      - ./frontend/.docker/nginx.dev.conf:/etc/nginx/nginx.conf:ro
       - ./frontend/.docker/ssl:/etc/nginx/ssl:ro
     ports:
       - "80:80"
       - "443:443"
     depends_on:
-      - frontend-superchat
       - backend-superchat
     networks:
       - superchat-net
@@ -123,7 +104,7 @@ services:
 
 # ──────────────────────────────────────────────────
 # Named volumes — data persists across container restarts.
-# Run "make reset" to destroy volumes (full reset).
+# Run "docker compose -f docker-compose.prod.yml down -v" for a full reset.
 # ──────────────────────────────────────────────────
 volumes:
   mysql-data:

@@ -1,0 +1,29 @@
+# Dependencies — installed inside Docker (can be 300MB+, must never enter build context)
+node_modules
+
+# Build output — produced inside Docker
+dist
+dist-ssr
+
+# Git history
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# TypeScript incremental build cache from host
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE and OS files
+.vscode
+.idea
+.DS_Store
+Thumbs.db
