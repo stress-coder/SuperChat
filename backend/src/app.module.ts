@@ -4,12 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { databaseConfig } from './config/database.config';
+import { jwtConfig } from './config/jwt.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig],
+      load: [databaseConfig, jwtConfig],
     }),
     TypeOrmModule.forRootAsync({
       inject: [databaseConfig.KEY],
@@ -19,4 +20,4 @@ import { databaseConfig } from './config/database.config';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

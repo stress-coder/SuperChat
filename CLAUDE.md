@@ -16,7 +16,7 @@ SuperChat/
 │   └── .docker/           # Dockerfile + .dockerignore + nginx.conf + ssl/
 ├── .claude/commands/      # Custom slash commands (see below)
 ├── docker-compose.yml
-├── docker-compose.example.yml  # Reference template
+├── docker-compose.prod.yml     # Production build (nginx serves compiled bundle)
 ├── .env.example
 └── CLAUDE.md
 ```
