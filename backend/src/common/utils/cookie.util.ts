@@ -1,28 +1,19 @@
 import type { ConfigService } from '@nestjs/config';
+import ms from 'ms';
+import type { StringValue } from 'ms';
 
-const unitMultipliers: Record<string, number> = {
-    s: 1000,
-    m: 60_000,
-    h: 3_600_000,
-    d: 86_400_000,
-};
+export const parseExpiryToMs = (expiresIn: StringValue): number => {
+    const parsed = ms(expiresIn);
 
-export const parseExpiryToMs = (expiresIn: string): number => {
-    const normalized = expiresIn.trim().toLowerCase();
-    const match = /^(\d+)(s|m|h|d)?$/.exec(normalized);
-
-    if (!match) {
+    if (typeof parsed !== 'number' || Number.isNaN(parsed)) {
         throw new Error(`Invalid expiry format: ${expiresIn}`);
     }
 
-    const value = Number(match[1]);
-    const unit = match[2] ?? 's';
-
-    return value * (unitMultipliers[unit] ?? 1000);
+    return parsed;
 };
 
 export const getRefreshCookieOptions = (configService: ConfigService,) => {
-    const refreshExpiresIn = configService.get<string>('jwt.refreshExpiresIn') ?? '7d';
+    const refreshExpiresIn = configService.get<StringValue>('jwt.refreshExpiresIn') ?? '7d';
 
     return {
         httpOnly: true,

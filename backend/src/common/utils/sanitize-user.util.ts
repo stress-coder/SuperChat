@@ -1,8 +1,6 @@
-export const toSafeUser = <T extends { password?: unknown; hashedRefreshToken?: unknown },>
-    (
-        user: T,
+export type SafeUser<T extends { password?: unknown }> = Omit<T, 'password'>;
 
-    ): Omit<T, 'password' | 'hashedRefreshToken'> => {
-    const { password, hashedRefreshToken, ...safeUser } = user;
-    return safeUser;
+export const toSafeUser = <T extends { password?: unknown }>(user: T): SafeUser<T> => {
+  const { password, ...safeUser } = user;
+  return safeUser;
 };

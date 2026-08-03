@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { databaseConfig } from './config/database.config';
 import { jwtConfig } from './config/jwt.config';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { jwtConfig } from './config/jwt.config';
       inject: [databaseConfig.KEY],
       useFactory: (config: ConfigType<typeof databaseConfig>) => config,
     }),
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

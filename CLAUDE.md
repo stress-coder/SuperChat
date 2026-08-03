@@ -25,6 +25,12 @@ Each sub-project has its own `CLAUDE.md` with detailed architecture:
 - `backend/CLAUDE.md` — module structure, entities, controller/service patterns, WebSocket events, env vars
 - `frontend/CLAUDE.md` — folder structure, env config rules, component/form/store patterns, routing
 
+## Implementation Status
+`backend/CLAUDE.md` and `frontend/CLAUDE.md` describe the **target** architecture for each sub-project — treat them as conventions to follow when building things out, not a description of what already exists. Check actual files before assuming a module or library is present:
+
+- **Backend**: only the `auth` module (register/login/JWT access+refresh) is implemented. `chat`, `message`, `user`, and `gateway` are scaffolded placeholders only and are not yet wired into `app.module.ts`. Redis, Socket.io, Helmet, `@nestjs/throttler`, and Multer/Cloudinary — all mentioned in `backend/CLAUDE.md`'s tech stack — are not yet added as dependencies.
+- **Frontend**: `src/` is still the default Vite/React scaffold. Tailwind, Zustand, react-router, axios, socket.io-client, react-hook-form/zod, react-hot-toast, lucide-react, and date-fns are documented conventions in `frontend/CLAUDE.md` but none are installed yet; no `src/config/env.ts` or `.env` files exist yet.
+
 ## Package Manager
 Always use **pnpm** — never npm or yarn.
 
@@ -42,6 +48,10 @@ pnpm test               # Jest unit tests
 pnpm test:watch         # Jest in watch mode
 pnpm test:cov           # Jest with coverage
 pnpm test:e2e           # E2E tests (jest-e2e.json)
+pnpm migration:generate # Generate a migration from entity changes
+pnpm migration:create   # Create an empty migration file
+pnpm migration:run      # Run pending migrations
+pnpm migration:revert   # Revert the last migration
 ```
 
 Run a single test file:
