@@ -23,7 +23,11 @@ export class User {
   @Column({ default: false })
   isOnline: boolean;
 
-  @Column({ type: 'timestamp', nullable: true, default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   lastSeen: Date;
 
   @CreateDateColumn()

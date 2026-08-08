@@ -7,20 +7,6 @@ Real-time chat application like WhatsApp and Telegram.
 Single repository with two independent projects: backend and frontend.
 No shared packages or workspaces — each app manages its own dependencies.
 
-## Repository Structure
-```
-SuperChat/
-├── backend/
-│   └── .docker/           # Dockerfile + .dockerignore (not in backend root)
-├── frontend/
-│   └── .docker/           # Dockerfile + .dockerignore + nginx.conf + ssl/
-├── .claude/commands/      # Custom slash commands (see below)
-├── docker-compose.yml
-├── docker-compose.prod.yml     # Production build (nginx serves compiled bundle)
-├── .env.example
-└── CLAUDE.md
-```
-
 Each sub-project has its own `CLAUDE.md` with detailed architecture:
 - `backend/CLAUDE.md` — module structure, entities, controller/service patterns, WebSocket events, env vars
 - `frontend/CLAUDE.md` — folder structure, env config rules, component/form/store patterns, routing
@@ -34,84 +20,7 @@ Each sub-project has its own `CLAUDE.md` with detailed architecture:
 ## Package Manager
 Always use **pnpm** — never npm or yarn.
 
-## Commands
-
-### Backend (`cd backend`)
-```bash
-pnpm start:dev          # Dev server with watch — http://localhost:3000
-pnpm build              # Compile TypeScript
-pnpm lint               # ESLint check
-pnpm lint:fix           # ESLint auto-fix
-pnpm format             # Prettier write
-pnpm format:check       # Prettier check
-pnpm test               # Jest unit tests
-pnpm test:watch         # Jest in watch mode
-pnpm test:cov           # Jest with coverage
-pnpm test:e2e           # E2E tests (jest-e2e.json)
-pnpm migration:generate # Generate a migration from entity changes
-pnpm migration:create   # Create an empty migration file
-pnpm migration:run      # Run pending migrations
-pnpm migration:revert   # Revert the last migration
-```
-
-Run a single test file:
-```bash
-pnpm test -- --testPathPattern=auth.service
-```
-
-### Frontend (`cd frontend`)
-```bash
-pnpm dev                # Dev server — http://localhost:5173
-pnpm build              # tsc + vite build
-pnpm preview            # Preview production build
-pnpm lint               # ESLint check
-pnpm lint:fix           # ESLint auto-fix
-pnpm format             # Prettier write
-pnpm format:check       # Prettier check
-```
-
-### Everything via Docker (from root)
-First add `127.0.0.1 superchat.test` to `/etc/hosts`, then:
-
-```bash
-make dev    # first run copies .env.example → .env; fill in values, then re-run
-make prod   # production build (nginx serves compiled bundle)
-make down   # stop all containers
-make reset  # stop + destroy all volumes (full reset)
-```
-
-**Development** (`make dev`) — hot reload, source volume-mounted:
-| Service | URL |
-|---|---|
-| Frontend + API | https://superchat.test (nginx → Vite HMR + NestJS watch) |
-| phpMyAdmin | http://localhost:`<PMA_HOST_PORT>` |
-| MySQL | internal only |
-
-**Production** (`make prod`) — optimised compiled builds:
-| Service | URL |
-|---|---|
-| Frontend + API | https://superchat.test (nginx → built bundle + compiled Node) |
-| phpMyAdmin | http://localhost:`<PMA_HOST_PORT>` |
-| MySQL / Backend | internal only |
-
-> Hot reload: `backend/src` and `frontend/src` are volume-mounted in dev — changes take effect instantly without restarting Docker.
-> `VITE_*` variables are baked into the JS bundle at build time. Changing them in prod requires `make prod` (rebuilds the image).
-
-## Pre-commit Hook
-Husky runs `lint-staged` on both `backend/` and `frontend/` automatically before each commit.
-- Backend: `eslint --fix` + `prettier --write` on `src/**/*.ts` and `test/**/*.ts`
-- Frontend: `eslint --fix` + `prettier --write` on `src/**/*.{ts,tsx,css}`
-
-## Custom Slash Commands (`.claude/commands/`)
-| Command | Purpose |
-|---|---|
-| `/create-module <name>` | Scaffold a full NestJS feature module (module + controller + service + DTOs) |
-| `/create-component <name>` | Scaffold a React component with `index.ts` re-export |
-| `/create-dto <name>` | Create a NestJS DTO with class-validator decorators |
-| `/create-hook <name>` | Create a custom React hook |
-| `/write-tests <target>` | Write Jest (backend) or Vitest+RTL (frontend) tests |
-| `/fix-bug <description>` | Diagnose and fix a bug |
-| `/review` | Code review the current changes |
+See each app's `package.json` scripts for backend/frontend commands (`pnpm lint`, `pnpm test`, `pnpm build`, etc.) and `.claude/commands/` for custom slash commands. Docker workflow: see the `docker-dev` skill.
 
 ## Plan Mode — Mandatory Workflow (CRITICAL)
 
@@ -203,21 +112,3 @@ add one step, adjust a description):
 - Never hardcode secrets, API keys, URLs, or ports — always use env variables
 - Commits must follow Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
 - Branch naming: `feature/*`, `bugfix/*`, `hotfix/*`
-
-## API Response Format (backend — always)
-```typescript
-{
-  statusCode: number,
-  message: string,
-  data: T
-}
-```
-
-## Error Response Format (backend — always)
-```typescript
-{
-  statusCode: number,
-  message: string,
-  error: string
-}
-```
