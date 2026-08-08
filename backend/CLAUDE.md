@@ -245,3 +245,21 @@ JWT_SECRET, JWT_EXPIRES_IN
 CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
 PORT
 ```
+
+## API Response Format (always)
+```typescript
+{
+  statusCode: number,
+  message: string,
+  data: T
+}
+```
+
+## Error Response Format (always)
+```typescript
+{
+  statusCode: number,
+  message: string,
+  error: string
+}
+```

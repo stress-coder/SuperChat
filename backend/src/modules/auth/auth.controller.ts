@@ -28,7 +28,8 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const existingRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME] ?? null;
+    const existingRefreshToken: string | null =
+      (req.cookies?.[REFRESH_COOKIE_NAME] as string | undefined) ?? null;
     const result = await this.authService.login(dto, existingRefreshToken);
 
     response.cookie(
@@ -74,7 +75,8 @@ export class AuthController {
     @Req() req: Request & { user: User },
     @Res({ passthrough: true }) response: Response,
   ) {
-    const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME] ?? null;
+    const refreshToken: string | null =
+      (req.cookies?.[REFRESH_COOKIE_NAME] as string | undefined) ?? null;
     const result = await this.authService.logout(req.user, refreshToken);
 
     response.clearCookie(REFRESH_COOKIE_NAME, {
