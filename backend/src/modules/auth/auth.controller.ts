@@ -6,6 +6,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '../../common/guards/jwt-refresh.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { getRefreshCookieOptions } from '../../common/utils/cookie.util';
 import { REFRESH_COOKIE_NAME } from '../../common/constants/auth.constants';
 import { User } from '../../entities/user.entity';
@@ -50,10 +51,10 @@ export class AuthController {
   @Post('refresh')
   @UseGuards(JwtRefreshGuard)
   async refresh(
-    @Req() req: Request & { user: User & { jti?: string } },
+    @CurrentUser() user: User & { jti?: string },
     @Res({ passthrough: true }) response: Response,
   ) {
-    const result = await this.authService.refresh(req.user);
+    const result = await this.authService.refresh(user);
 
     response.cookie(
       REFRESH_COOKIE_NAME,
@@ -72,12 +73,13 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   async logout(
-    @Req() req: Request & { user: User },
+    @CurrentUser() user: User,
+    @Req() req: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
     const refreshToken: string | null =
       (req.cookies?.[REFRESH_COOKIE_NAME] as string | undefined) ?? null;
-    const result = await this.authService.logout(req.user, refreshToken);
+    const result = await this.authService.logout(user, refreshToken);
 
     response.clearCookie(REFRESH_COOKIE_NAME, {
       path: '/',
@@ -91,10 +93,10 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@Req() req: Request & { user: User }) {
+  me(@CurrentUser() user: User) {
     return {
       message: 'Current user retrieved successfully.',
-      data: req.user,
+      data: user,
     };
   }
 }
