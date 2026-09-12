@@ -4,21 +4,21 @@ import { User } from './user.entity';
 @Entity()
 export class Session {
   @PrimaryColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column({ type: 'timestamp' })
-  expiresAt: Date;
+  expiresAt!: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  revokedAt: Date | null;
+  revokedAt!: Date | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

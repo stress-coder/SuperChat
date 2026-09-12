@@ -3,33 +3,33 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeor
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ unique: true })
-  username: string;
+  username!: string;
 
   @Column({ unique: true })
-  email: string;
+  email!: string;
 
   @Column()
-  password: string;
+  password!: string;
 
   @Column({ nullable: true })
-  avatar: string;
+  avatar!: string;
 
   @Column({ default: false })
-  isOnline: boolean;
+  isOnline!: boolean;
 
   @Column({
     type: 'timestamp',
     nullable: true,
     default: () => 'CURRENT_TIMESTAMP',
   })
-  lastSeen: Date;
+  lastSeen!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

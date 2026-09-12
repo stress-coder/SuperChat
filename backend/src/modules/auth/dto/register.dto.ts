@@ -6,7 +6,7 @@ export class RegisterDto {
   @Length(2, 50, {
     message: 'Name must be between 2 and 50 characters long.',
   })
-  name: string;
+  name!: string;
 
   @IsString({ message: 'Username must be a string.' })
   @IsNotEmpty({ message: 'Username is required.' })
@@ -16,16 +16,16 @@ export class RegisterDto {
   @Matches(/^[a-zA-Z0-9_.-]+$/, {
     message: 'Username may only contain letters, numbers, underscores, dots, and hyphens.',
   })
-  username: string;
+  username!: string;
 
   @IsEmail({}, { message: 'Email must be a valid email address.' })
   @IsNotEmpty({ message: 'Email is required.' })
-  email: string;
+  email!: string;
 
   @IsString({ message: 'Password must be a string.' })
   @IsNotEmpty({ message: 'Password is required.' })
   @MinLength(8, {
     message: 'Password must be at least 8 characters long.',
   })
-  password: string;
+  password!: string;
 }
