@@ -22,11 +22,13 @@ src/
 │   │   ├── global.css     # Design tokens + resets (imported once in main.tsx)
 │   │   ├── auth.css
 │   │   ├── button.css
-│   │   └── chat.css
+│   │   ├── chat.css
+│   │   └── toast.css
 │   └── images/            # All images live here
 ├── components/
 │   ├── ui/                # Base reusable components
-│   │   └── Button.tsx
+│   │   ├── Button.tsx
+│   │   └── AppToaster.tsx # Single toaster outlet, mounted once in main.tsx
 │   └── shared/            # Compound components + route guards
 │       ├── ProtectedRoute.tsx
 │       └── PublicOnlyRoute.tsx
@@ -54,7 +56,8 @@ src/
 │   ├── login.validation.ts
 │   └── register.validation.ts
 ├── utils/                 # Helper functions
-│   └── authStorage.ts
+│   ├── authStorage.ts
+│   └── toast.ts           # showToast — the ONLY file importing react-hot-toast
 ├── App.tsx                # React Router config
 └── main.tsx
 ```
@@ -183,6 +186,28 @@ export const loginRequest = async (values: LoginFormValues): Promise<AuthResult>
 toast.success(message)          // ✅ from the backend
 toast.error((error as Error).message)
 toast.error('Login failed')     // ❌ never hardcode message text
+```
+
+## Toast Rules
+
+- **Never import `react-hot-toast` outside `utils/toast.ts` and `ui/AppToaster.tsx`.**
+  Everywhere else: `import { showToast } from '@/utils/toast'`.
+- `<AppToaster />` is mounted once in `main.tsx` — never add a second `<Toaster>`.
+- Severity is decided in one place by HTTP status, not at the call site:
+  **4xx → warning** (the user or request was at fault), **5xx / network → error**,
+  **2xx → success**.
+- The message argument always comes from the backend — never a literal.
+- One user action = one toast. Don't toast each internal request separately.
+
+```typescript
+import { showToast } from '@/utils/toast'
+
+showToast.success(message)     // ✅ backend message
+showToast.fromError(error)     // ✅ picks warning vs error by status
+showToast.warning(message)     // ✅ explicit when you already know
+
+toast.success('Saved!')        // ❌ never import the library directly
+showToast.error('Login failed')// ❌ never hardcode message text
 ```
 
 ## Validation Rules

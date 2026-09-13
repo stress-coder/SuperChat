@@ -1,8 +1,8 @@
-import toast from 'react-hot-toast';
 import { loginRequest, logoutRequest, registerRequest } from '@/apis/auth.api';
 import { AUTH_LOGIN_SUCCESS, AUTH_LOGOUT } from '@/store/constants/authConstants';
-import type { AuthAction } from '@/store/slices/authSlice';
+import type { AuthAction, Credentials } from '@/store/slices/authSlice';
 import { clearStoredAuth, writeStoredAuth } from '@/utils/authStorage';
+import { showToast } from '@/utils/toast';
 import type { LoginFormValues } from '@/validations/login.validation';
 import type { RegisterFormValues } from '@/validations/register.validation';
 
@@ -17,17 +17,22 @@ import type { RegisterFormValues } from '@/validations/register.validation';
 
 type Dispatch = (action: AuthAction) => void;
 
+/** Persist + commit a session. Shared so login and register do it identically. */
+const commitSession = (dispatch: Dispatch, credentials: Credentials): void => {
+  writeStoredAuth(credentials.accessToken, credentials.user);
+  dispatch({ type: AUTH_LOGIN_SUCCESS, payload: credentials });
+};
+
 export const loginUser =
   (values: LoginFormValues) =>
   async (dispatch: Dispatch): Promise<void> => {
     try {
       const { message, user, accessToken } = await loginRequest(values);
 
-      writeStoredAuth(accessToken, user);
-      dispatch({ type: AUTH_LOGIN_SUCCESS, payload: { user, accessToken } });
-      toast.success(message);
+      commitSession(dispatch, { user, accessToken });
+      showToast.success(message);
     } catch (error) {
-      toast.error((error as Error).message);
+      showToast.fromError(error);
     }
   };
 
@@ -36,14 +41,19 @@ export const registerUser =
   async (dispatch: Dispatch): Promise<void> => {
     try {
       // /auth/register creates the user but returns no tokens, so sign in with
-      // the same credentials to get a session.
-      toast.success(await registerRequest(values));
-    } catch (error) {
-      toast.error((error as Error).message);
-      return;
-    }
+      // the same credentials. That login stays silent: the user pressed
+      // "Create account" once, so they see one toast — the register message.
+      const message = await registerRequest(values);
+      const { user, accessToken } = await loginRequest({
+        email: values.email,
+        password: values.password,
+      });
 
-    await loginUser({ email: values.email, password: values.password })(dispatch);
+      commitSession(dispatch, { user, accessToken });
+      showToast.success(message);
+    } catch (error) {
+      showToast.fromError(error);
+    }
   };
 
 export const logoutUser =
@@ -57,6 +67,6 @@ export const logoutUser =
     dispatch({ type: AUTH_LOGOUT });
 
     if (message) {
-      toast.success(message);
+      showToast.success(message);
     }
   };
