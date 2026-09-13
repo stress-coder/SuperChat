@@ -1,0 +1,174 @@
+/* Shared styles for the login and register pages (src/pages/auth) */
+
+.auth-layout {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  background: var(--bg);
+}
+
+.auth-aside {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  padding: 56px;
+  overflow: hidden;
+  color: var(--text-h);
+  background:
+    radial-gradient(circle at 20% 20%, var(--accent-bg), transparent 60%), var(--social-bg);
+  border-right: 1px solid var(--border);
+}
+
+.auth-aside__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--heading);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.auth-aside__logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.auth-aside__title {
+  font-size: 40px;
+  line-height: 112%;
+  letter-spacing: -1.2px;
+  margin: 0;
+}
+
+.auth-aside__text {
+  max-width: 42ch;
+  font-size: 16px;
+}
+
+.auth-aside__illustration {
+  width: 100%;
+  max-width: 320px;
+  margin-top: 8px;
+  align-self: center;
+  filter: drop-shadow(var(--shadow));
+}
+
+.auth-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  text-align: left;
+}
+
+.auth-card__title {
+  font-size: 30px;
+  line-height: 118%;
+  letter-spacing: -0.6px;
+  margin: 0 0 8px;
+}
+
+.auth-card__subtitle {
+  font-size: 16px;
+  margin-bottom: 32px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-field__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.auth-field__input {
+  font: inherit;
+  font-size: 16px;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 13px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.auth-field__input::placeholder {
+  color: var(--text);
+  opacity: 0.65;
+}
+
+.auth-field__input:hover {
+  border-color: var(--accent-border);
+}
+
+.auth-field__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.auth-field__input--invalid {
+  border-color: var(--danger);
+}
+
+.auth-field__input--invalid:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-bg);
+}
+
+.auth-field__error {
+  font-size: 13px;
+  color: var(--danger);
+}
+
+/* The submit button itself lives in src/components/ui/Button.tsx
+   (styled by button.css) — the form only owns its spacing. */
+.auth-form .button {
+  margin-top: 6px;
+}
+
+.auth-switch {
+  font-size: 15px;
+  margin-top: 24px;
+}
+
+.auth-switch__link {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.auth-switch__link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-aside {
+    display: none;
+  }
+}

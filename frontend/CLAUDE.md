@@ -2,53 +2,63 @@
 
 ## Tech Stack
 - **Framework:** React 19 + Vite + TypeScript (strict mode)
-- **Styling:** Tailwind CSS — no inline styles, ever
-- **State Management:** Zustand
+- **Styling:** Plain CSS with BEM-style class names, one file per area in `src/assets/css/` — no inline styles, ever
+- **State Management:** Redux Toolkit (`configureStore`) with hand-written switch-case reducers
 - **HTTP Client:** Axios — base URL from `VITE_API_URL` env variable
 - **Real-time:** socket.io-client
 - **Forms:** react-hook-form + zod
-- **Notifications:** react-hot-toast
+- **Notifications:** react-hot-toast — the single place backend messages are shown
 - **Icons:** lucide-react
 - **Date Formatting:** date-fns
 
 ## Folder Structure
 ```
 src/
+├── apis/                  # All API + logic code — never put logic in pages
+│   ├── client.ts          # Shared axios instance + interceptors + ApiError
+│   └── auth.api.ts        # ONE file per module: login/register/refresh/logout
+├── assets/
+│   ├── css/               # All stylesheets live here
+│   │   ├── global.css     # Design tokens + resets (imported once in main.tsx)
+│   │   ├── auth.css
+│   │   ├── button.css
+│   │   ├── chat.css
+│   │   └── toast.css
+│   └── images/            # All images live here
 ├── components/
 │   ├── ui/                # Base reusable components
 │   │   ├── Button.tsx
-│   │   ├── Input.tsx
-│   │   ├── Avatar.tsx
-│   │   └── Modal.tsx
-│   └── shared/            # Compound components
-│       ├── ChatBubble.tsx
-│       └── UserCard.tsx
+│   │   └── AppToaster.tsx # Single toaster outlet, mounted once in main.tsx
+│   └── shared/            # Compound components + route guards
+│       ├── ProtectedRoute.tsx
+│       └── PublicOnlyRoute.tsx
 ├── config/
 │   └── env.ts             # Central env config — read all env vars here
 ├── pages/
-│   ├── LoginPage.tsx
-│   ├── RegisterPage.tsx
+│   ├── auth/
+│   │   ├── LoginPage.tsx
+│   │   └── RegisterPage.tsx
 │   └── ChatPage.tsx
-├── features/
-│   ├── auth/              # Auth logic + hooks + components
-│   └── chat/              # Chat logic + hooks + components
-├── hooks/                 # Custom React hooks
-│   ├── useAuth.ts
-│   ├── useSocket.ts
-│   └── useChat.ts
-├── services/              # API calls and socket setup
-│   ├── api.ts             # Axios instance
-│   └── socket.ts          # Socket.io-client instance
-├── store/                 # Zustand global stores
-│   ├── authStore.ts
-│   └── chatStore.ts
+├── store/                 # Redux
+│   ├── constants/         # ACTION_TYPE constants, block letters
+│   │   └── authConstants.ts
+│   ├── actions/           # Dispatchers — API calls + side effects live here
+│   │   └── authActions.ts
+│   ├── slices/            # Pure switch-case reducers
+│   │   └── authSlice.ts
+│   ├── hooks.ts           # Typed useAppDispatch / useAppSelector
+│   └── index.ts           # configureStore
+├── hooks/                 # Custom React hooks (useSocket, useChat, …)
 ├── types/                 # TypeScript interfaces
-│   ├── user.types.ts
-│   ├── chat.types.ts
-│   └── message.types.ts
+│   ├── api.types.ts       # ApiResponse<T> envelope
+│   └── user.types.ts
+├── validations/           # zod schemas — ONE file per schema
+│   ├── login.validation.ts
+│   └── register.validation.ts
 ├── utils/                 # Helper functions
-├── router/
-│   └── index.tsx          # React Router config
+│   ├── authStorage.ts
+│   └── toast.ts           # showToast — the ONLY file importing react-hot-toast
+├── App.tsx                # React Router config
 └── main.tsx
 ```
 
@@ -108,11 +118,11 @@ VITE_SOCKET_URL=
 
 ## Component Rules
 - Every component must have a TypeScript props interface
-- Always use Tailwind CSS — never inline styles
+- Always use plain CSS classes from `src/assets/css/` — never inline styles
 - Always export component as default export
 - Always handle loading state (show spinner or skeleton)
 - Always handle error state (show error message)
-- API calls never go directly in components — use services/
+- API calls never go directly in components — use `src/apis/`
 
 ```typescript
 // ✅ Correct component pattern
@@ -124,7 +134,7 @@ interface MessageBubbleProps {
 
 const MessageBubble = ({ content, isSent, createdAt }: MessageBubbleProps) => {
   return (
-    <div className={`flex ${isSent ? 'justify-end' : 'justify-start'}`}>
+    <div className={`bubble${isSent ? ' bubble--sent' : ''}`}>
       ...
     </div>
   )
@@ -153,51 +163,154 @@ const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<
 })
 ```
 
-## Zustand Store Pattern
+## API Rules
+
+- **One API file per module** — `apis/auth.api.ts`, `apis/chat.api.ts`. The shared
+  axios instance lives once in `apis/client.ts`; never create another.
+- **Never write user-facing message text in the frontend.** Every success and
+  error string comes from the backend envelope's `message`. `client.ts` has a
+  response interceptor that rejects with an `ApiError` carrying that message;
+  actions just pass it to a toast.
+- Type every call with the envelope: `apiClient.post<ApiResponse<LoginData>>(...)`.
+- Show messages with `toast.success()` / `toast.error()` from the dispatcher —
+  never duplicate the same message in an inline banner as well.
 
 ```typescript
-// authStore.ts
-interface AuthStore {
-  user: User | null
-  token: string | null
-  isAuthenticated: boolean
-  login: (user: User, token: string) => void
-  logout: () => void
+// apis/auth.api.ts — return the backend's message alongside the data
+export const loginRequest = async (values: LoginFormValues): Promise<AuthResult> => {
+  const { data } = await apiClient.post<ApiResponse<LoginData>>('/auth/login', values)
+  return { message: data.message, user: data.data.user, accessToken: data.data.accessToken }
 }
 
-// chatStore.ts
-interface ChatStore {
-  chats: Chat[]
-  activeChat: Chat | null
-  messages: Message[]
-  setActiveChat: (chat: Chat) => void
-  addMessage: (message: Message) => void
+// store/actions/authActions.ts — the message is displayed, never invented
+toast.success(message)          // ✅ from the backend
+toast.error((error as Error).message)
+toast.error('Login failed')     // ❌ never hardcode message text
+```
+
+## Toast Rules
+
+- **Never import `react-hot-toast` outside `utils/toast.ts` and `ui/AppToaster.tsx`.**
+  Everywhere else: `import { showToast } from '@/utils/toast'`.
+- `<AppToaster />` is mounted once in `main.tsx` — never add a second `<Toaster>`.
+- Severity is decided in one place by HTTP status, not at the call site:
+  **4xx → warning** (the user or request was at fault), **5xx / network → error**,
+  **2xx → success**.
+- The message argument always comes from the backend — never a literal.
+- One user action = one toast. Don't toast each internal request separately.
+
+```typescript
+import { showToast } from '@/utils/toast'
+
+showToast.success(message)     // ✅ backend message
+showToast.fromError(error)     // ✅ picks warning vs error by status
+showToast.warning(message)     // ✅ explicit when you already know
+
+toast.success('Saved!')        // ❌ never import the library directly
+showToast.error('Login failed')// ❌ never hardcode message text
+```
+
+## Validation Rules
+
+- All zod schemas live in `src/validations/`, **one file per schema**:
+  `login.validation.ts`, `register.validation.ts`.
+- Each file exports the schema and its inferred type.
+- Schemas mirror the backend DTO rules, since the backend's validation messages
+  are not currently usable (see the note in the API Rules above).
+
+## Redux Pattern (always follow this flow)
+
+State changes always travel the same four steps, one per file:
+
+```
+event handler  →  dispatcher  →  ACTION constant  →  switch case
+   (page)         (actions/)      (constants/)        (slices/)
+```
+
+**Rules**
+- Dispatch from the event itself — the submit handler, the click handler. No wrapper hooks.
+- Action types are block-letter constants in `store/constants/`, never inline strings.
+- Reducers are **pure**: no API calls, no localStorage, no navigation. Always return a new object — there is no Immer, so mutating state silently skips re-renders.
+- All side effects live in `store/actions/`.
+- Never use `createSlice`. Plain reducers keep the action types visible.
+
+```typescript
+// store/constants/authConstants.ts
+export const AUTH_LOGIN_SUCCESS = 'AUTH_LOGIN_SUCCESS'
+export const AUTH_LOGOUT = 'AUTH_LOGOUT'
+
+// store/slices/authSlice.ts — pure, returns new objects
+export type AuthAction =
+  | { type: typeof AUTH_LOGIN_SUCCESS; payload: Credentials }
+  | { type: typeof AUTH_LOGOUT }
+
+const authReducer = (state: AuthState = initialState, action: UnknownAction): AuthState => {
+  const authAction = action as AuthAction
+
+  switch (authAction.type) {
+    case AUTH_LOGIN_SUCCESS:
+      return { ...state, user: authAction.payload.user, isAuthenticated: true }
+    case AUTH_LOGOUT:
+      return { ...state, user: null, isAuthenticated: false }
+    default:
+      return state
+  }
+}
+
+// store/actions/authActions.ts — side effects belong here
+export const loginUser =
+  (values: LoginFormValues) =>
+  async (dispatch: Dispatch): Promise<void> => {
+    try {
+      const { message, user, accessToken } = await loginRequest(values)
+      writeStoredAuth(accessToken, user)
+      dispatch({ type: AUTH_LOGIN_SUCCESS, payload: { user, accessToken } })
+      toast.success(message)        // backend's message
+    } catch (error) {
+      toast.error((error as Error).message)
+    }
+  }
+
+// pages/auth/LoginPage.tsx — dispatch at the point of the event
+const dispatch = useAppDispatch()
+
+const submit = async (values: LoginFormValues) => {
+  await dispatch(loginUser(values))
 }
 ```
 
-## Axios Instance Pattern
+## Axios Instance Pattern (`src/apis/client.ts`)
 ```typescript
-// services/api.ts
+// apis/client.ts
 import { env } from '@/config/env'
+import { store } from '@/store'
 
-const api = axios.create({
+export const apiClient = axios.create({
   baseURL: env.apiUrl,    // ✅ from env — never hardcoded
+  withCredentials: true,  // required: refresh token is an httpOnly cookie
 })
 
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token
-  if (token) config.headers.Authorization = `Bearer ${token}`
+apiClient.interceptors.request.use((config) => {
+  const { accessToken } = store.getState().auth
+  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`
   return config
 })
+
+// Failures reject with ApiError carrying the BACKEND's message — never ours
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => Promise.reject(new ApiError(error.response?.data?.message ?? error.message, status)),
+)
 ```
 
 ## Socket Pattern
 ```typescript
-// services/socket.ts
+// apis/socket.ts
 import { env } from '@/config/env'
+import { store } from '@/store'
 
 const socket = io(env.socketUrl, {    // ✅ from env — never hardcoded
-  auth: { token: useAuthStore.getState().token },
+  auth: { token: store.getState().auth.accessToken },
   autoConnect: false,
 })
 ```

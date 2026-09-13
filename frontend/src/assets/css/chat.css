@@ -1,0 +1,32 @@
+/* Temporary styling for the post-login demo page (src/pages/ChatPage.tsx). */
+
+.chat-demo {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.chat-demo__title {
+  font-size: 32px;
+  line-height: 118%;
+  letter-spacing: -0.6px;
+  margin: 0;
+}
+
+.chat-demo__user {
+  font-size: 16px;
+}
+
+.chat-demo__email {
+  color: var(--text-h);
+  font-weight: 500;
+}
+
+.chat-demo__actions {
+  margin-top: 8px;
+}
