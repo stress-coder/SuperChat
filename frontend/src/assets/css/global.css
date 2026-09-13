@@ -82,3 +82,11 @@ h3 {
 p {
   margin: 0;
 }
+
+/* Shared spin animation — used by the Button spinner and the page Loader.
+   Defined once here so no stylesheet repeats the keyframes. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
