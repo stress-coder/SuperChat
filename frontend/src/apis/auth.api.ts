@@ -1,27 +1,14 @@
-import type { ApiResponse } from '@/types/api.types';
-import type { User } from '@/types/user.types';
+import type { ApiResponse } from '@/apis/interfaces/apiResponse.interface';
+import type { AuthResult } from '@/apis/interfaces/authResult.interface';
+import type { LoginData } from '@/apis/interfaces/login.interface';
+import type { RefreshData } from '@/apis/interfaces/refresh.interface';
+import type { User } from '@/interfaces/user.interface';
 import { readStoredAuth } from '@/utils/authStorage';
 import type { LoginFormValues } from '@/validations/login.validation';
 import type { RegisterFormValues } from '@/validations/register.validation';
 import apiClient, { ApiError } from './client';
 
-/** The auth module's only API file. Response payloads as they appear in `data`. */
-
-interface LoginData {
-  accessToken: string;
-  user: User;
-}
-
-interface RefreshData {
-  accessToken: string;
-}
-
-/** A signed-in session plus the backend's message for it. */
-export interface AuthResult {
-  message: string;
-  user: User;
-  accessToken: string;
-}
+/** The auth module's only API file. Interfaces live in `@/apis/interfaces`. */
 
 const ALREADY_LOGGED_IN = 409;
 

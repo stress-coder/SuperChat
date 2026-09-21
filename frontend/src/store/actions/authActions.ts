@@ -1,6 +1,7 @@
 import { loginRequest, logoutRequest, registerRequest } from '@/apis/auth.api';
 import { AUTH_LOGIN_SUCCESS, AUTH_LOGOUT } from '@/store/constants/authConstants';
-import type { AuthAction, Credentials } from '@/store/slices/authSlice';
+import type { AuthAction } from '@/store/types/authAction.type';
+import type { Credentials } from '@/store/interfaces/credentials.interface';
 import { clearStoredAuth, writeStoredAuth } from '@/utils/authStorage';
 import { showToast } from '@/utils/toast';
 import type { LoginFormValues } from '@/validations/login.validation';

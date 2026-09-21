@@ -1,23 +1,8 @@
 import type { UnknownAction } from '@reduxjs/toolkit';
-import type { User } from '@/types/user.types';
 import { readStoredAuth } from '@/utils/authStorage';
 import { AUTH_LOGIN_SUCCESS, AUTH_LOGOUT } from '@/store/constants/authConstants';
-
-export interface AuthState {
-  user: User | null;
-  accessToken: string | null;
-  isAuthenticated: boolean;
-}
-
-export interface Credentials {
-  user: User;
-  accessToken: string;
-}
-
-/** Every action this reducer understands. The union makes a typo'd type a build error. */
-export type AuthAction =
-  | { type: typeof AUTH_LOGIN_SUCCESS; payload: Credentials }
-  | { type: typeof AUTH_LOGOUT };
+import type { AuthAction } from '@/store/types/authAction.type';
+import type { AuthState } from '@/store/interfaces/authState.interface';
 
 // Hydrated synchronously so the first render already knows whether the visitor
 // is signed in — no loading gate, and no flash of the login page on reload.

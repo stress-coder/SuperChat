@@ -1,4 +1,4 @@
-import type { User } from '@/types/user.types';
+import type { User } from '@/interfaces/user.interface';
 
 /**
  * Persists the access token + user so a page reload stays logged in.

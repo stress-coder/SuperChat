@@ -16,7 +16,12 @@
 src/
 ├── apis/                  # All API + logic code — never put logic in pages
 │   ├── client.ts          # Shared axios instance + interceptors + ApiError
-│   └── auth.api.ts        # ONE file per module: login/register/refresh/logout
+│   ├── auth.api.ts        # ONE file per module: login/register/refresh/logout
+│   └── interfaces/        # API payload interfaces — ONE interface per file
+│       ├── apiResponse.interface.ts # ApiResponse<T> envelope
+│       ├── login.interface.ts       # LoginData
+│       ├── refresh.interface.ts     # RefreshData
+│       └── authResult.interface.ts  # AuthResult
 ├── assets/
 │   ├── css/               # All stylesheets live here
 │   │   ├── global.css     # Design tokens + resets (imported once in main.tsx)
@@ -46,12 +51,16 @@ src/
 │   │   └── authActions.ts
 │   ├── slices/            # Pure switch-case reducers
 │   │   └── authSlice.ts
+│   ├── interfaces/        # Redux interfaces — ONE per file
+│   │   ├── authState.interface.ts   # AuthState
+│   │   └── credentials.interface.ts # Credentials
+│   ├── types/             # Redux type aliases / unions — ONE per file
+│   │   └── authAction.type.ts       # AuthAction union
 │   ├── hooks.ts           # Typed useAppDispatch / useAppSelector
 │   └── index.ts           # configureStore
 ├── hooks/                 # Custom React hooks (useSocket, useChat, …)
-├── types/                 # TypeScript interfaces
-│   ├── api.types.ts       # ApiResponse<T> envelope
-│   └── user.types.ts
+├── interfaces/            # COMMON interfaces only — shared across layers
+│   └── user.interface.ts  # User
 ├── validations/           # zod schemas — ONE file per schema
 │   ├── login.validation.ts
 │   └── register.validation.ts
@@ -209,6 +218,27 @@ showToast.warning(message)     // ✅ explicit when you already know
 toast.success('Saved!')        // ❌ never import the library directly
 showToast.error('Login failed')// ❌ never hardcode message text
 ```
+
+## Interface & Type Rules
+
+`interface` and `type` are not the same thing, so they do not share a folder.
+
+- **Interfaces** — object shapes declared with `interface`. One per file, named
+  `<name>.interface.ts` (camelCase), in the `interfaces/` folder of the layer
+  that owns it:
+  - `src/apis/interfaces/` — API request/response payloads (`LoginData`,
+    `RefreshData`, `AuthResult`, `ApiResponse<T>`)
+  - `src/store/interfaces/` — redux state shapes (`AuthState`, `Credentials`)
+  - `src/interfaces/` — **common only**: shapes shared across layers (`User`)
+- **Type aliases** — unions, intersections, mapped and utility types declared
+  with `type`. One per file, named `<name>.type.ts`, in the `types/` folder of
+  the same layer: e.g. `src/store/types/authAction.type.ts` (`AuthAction`).
+- Never declare an interface or type alias inline in an API file, page, or store
+  file — the only exception is a component's own `Props` interface, which stays
+  beside the component.
+- Import with the `@/` alias:
+  `import type { User } from '@/interfaces/user.interface'`,
+  `import type { AuthAction } from '@/store/types/authAction.type'`.
 
 ## Validation Rules
 
