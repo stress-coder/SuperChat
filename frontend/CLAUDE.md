@@ -27,19 +27,31 @@ src/
 │   │   ├── global.css     # Design tokens + resets (imported once in main.tsx)
 │   │   ├── auth.css
 │   │   ├── button.css
+│   │   ├── field.css
 │   │   ├── chat.css
 │   │   └── toast.css
 │   └── images/            # All images live here
-├── components/
+├── components/            # ALL markup lives here — pages have none
 │   ├── ui/                # Base reusable components
 │   │   ├── Button.tsx
+│   │   ├── Loader.tsx     # Suspense fallback
+│   │   ├── TextField.tsx  # Label + input + inline error (react-hook-form)
 │   │   └── AppToaster.tsx # Single toaster outlet, mounted once in main.tsx
-│   └── shared/            # Compound components + route guards
-│       ├── ProtectedRoute.tsx
-│       └── PublicOnlyRoute.tsx
+│   ├── shared/            # Route guards
+│   │   ├── ProtectedRoute.tsx
+│   │   └── PublicOnlyRoute.tsx
+│   ├── auth/              # Feature components for the auth screens
+│   │   ├── AuthLayout.tsx # Two-column shell + branded aside
+│   │   ├── AuthCard.tsx   # Card heading + form slot + switch link
+│   │   ├── LoginForm.tsx  # Owns useForm(loginSchema)
+│   │   ├── RegisterForm.tsx
+│   │   ├── LoginView.tsx  # The whole /login screen — rendered by LoginPage
+│   │   └── RegisterView.tsx
+│   └── chat/
+│       └── ChatView.tsx   # The whole /chat screen — rendered by ChatPage
 ├── config/
 │   └── env.ts             # Central env config — read all env vars here
-├── pages/
+├── pages/                 # Redux wiring only — each renders ONE view component
 │   ├── auth/
 │   │   ├── LoginPage.tsx
 │   │   └── RegisterPage.tsx
@@ -126,6 +138,13 @@ VITE_SOCKET_URL=
 ```
 
 ## Component Rules
+- **Pages contain no markup.** A page in `src/pages/` does redux wiring only —
+  `useAppDispatch` / `useAppSelector`, the submit or click handler — and returns
+  a single view component (`<LoginView onSubmit={submit} />`). A page must never
+  contain a `className`, a `<div>`, or any copy text. To change a design, edit
+  or add a component; never reach into a page.
+- Screens are composed bottom-up: `ui/` primitives → feature components in
+  `components/<feature>/` → one `<Feature>View` per route.
 - Every component must have a TypeScript props interface
 - Always use plain CSS classes from `src/assets/css/` — never inline styles
 - Always export component as default export

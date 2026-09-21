@@ -88,60 +88,6 @@
   gap: 18px;
 }
 
-.auth-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.auth-field__label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-.auth-field__input {
-  font: inherit;
-  font-size: 16px;
-  color: var(--text-h);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 11px 13px;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
-}
-
-.auth-field__input::placeholder {
-  color: var(--text);
-  opacity: 0.65;
-}
-
-.auth-field__input:hover {
-  border-color: var(--accent-border);
-}
-
-.auth-field__input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-bg);
-}
-
-.auth-field__input--invalid {
-  border-color: var(--danger);
-}
-
-.auth-field__input--invalid:focus {
-  border-color: var(--danger);
-  box-shadow: 0 0 0 3px var(--danger-bg);
-}
-
-.auth-field__error {
-  font-size: 13px;
-  color: var(--danger);
-}
-
 /* The submit button itself lives in src/components/ui/Button.tsx
    (styled by button.css) — the form only owns its spacing. */
 .auth-form .button {

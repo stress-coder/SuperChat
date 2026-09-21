@@ -1,0 +1,55 @@
+/* Form field styles for src/components/ui/TextField.tsx */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.field__input {
+  font: inherit;
+  font-size: 16px;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 13px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.field__input::placeholder {
+  color: var(--text);
+  opacity: 0.65;
+}
+
+.field__input:hover {
+  border-color: var(--accent-border);
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.field__input--invalid {
+  border-color: var(--danger);
+}
+
+.field__input--invalid:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-bg);
+}
+
+.field__error {
+  font-size: 13px;
+  color: var(--danger);
+}
