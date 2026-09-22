@@ -1,0 +1,20 @@
+import type { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAppSelector } from '@/store/hooks';
+
+interface ProtectedRouteProps {
+  children: ReactNode;
+}
+
+/** Gate for signed-in-only routes — sends visitors to /login. */
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+export default ProtectedRoute;

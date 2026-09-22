@@ -79,6 +79,10 @@ services:
       - ./frontend/src:/app/src
     environment:
       DOCKER_DEV: "true"
+      # Vite picks VITE_* straight out of process.env, so these reach the
+      # client bundle without mounting a .env file (only src/ is mounted).
+      VITE_API_URL: ${VITE_API_URL:-/api}
+      VITE_SOCKET_URL: ${VITE_SOCKET_URL:-/}
     networks:
       - superchat-net
     restart: unless-stopped

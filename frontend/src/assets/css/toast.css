@@ -1,0 +1,34 @@
+/* Styling for the shared toaster (src/components/ui/AppToaster.tsx).
+   `div.toast` outranks react-hot-toast's own generated class, so the library's
+   default white background is overridden without !important or inline styles. */
+
+div.toast {
+  font: inherit;
+  font-size: 15px;
+  max-width: 420px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  color: var(--text-h);
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+div.toast--success {
+  border-color: var(--success-border);
+  border-left-color: var(--success);
+  background: var(--success-bg);
+}
+
+div.toast--error {
+  border-color: var(--danger-border);
+  border-left-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+div.toast--warning {
+  border-color: var(--warning-border);
+  border-left-color: var(--warning);
+  background: var(--warning-bg);
+}
