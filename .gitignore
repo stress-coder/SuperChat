@@ -12,3 +12,4 @@ docker-compose.yml
 frontend/.docker/ssl/*.crt
 frontend/.docker/ssl/*.key
 backend/node_modules/
+mysql-data
