@@ -1,6 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { join } from 'path';
 import type { DataSourceOptions } from 'typeorm';
+import { PluralNamingStrategy } from '../common/strategies/plural-naming.strategy';
 
 export const getDatabaseConfig = (): DataSourceOptions => ({
   type: 'mysql',
@@ -12,6 +13,7 @@ export const getDatabaseConfig = (): DataSourceOptions => ({
   entities: [join(__dirname, '../entities/*.entity{.ts,.js}')],
   migrations: [join(__dirname, '../database/migrations/*{.ts,.js}')],
   synchronize: false,
+  namingStrategy: new PluralNamingStrategy(),
 });
 
 export const databaseConfig = registerAs('database', getDatabaseConfig);
