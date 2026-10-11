@@ -6,6 +6,8 @@ import { AppService } from './app.service';
 import { databaseConfig } from './config/database.config';
 import { jwtConfig } from './config/jwt.config';
 import { AuthModule } from './modules/auth/auth.module';
+import { InboxModule } from './modules/inbox/inbox.module';
+import { MessageModule } from './modules/message/message.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { AuthModule } from './modules/auth/auth.module';
       useFactory: (config: ConfigType<typeof databaseConfig>) => config,
     }),
     AuthModule,
+    InboxModule,
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

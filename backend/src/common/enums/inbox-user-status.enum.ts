@@ -1,5 +1,6 @@
 export enum InboxUserStatus {
   ACTIVE = 'active',
-  BANNED = 'banned',
   MUTED = 'muted',
+  ARCHIVED = 'archived',
+  BANNED = 'banned',
 }
