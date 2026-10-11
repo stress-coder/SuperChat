@@ -1,4 +1,4 @@
 export interface InboxUserProperties {
-  theme: string;
-  notification: string;
+  theme?: string;
+  notification?: string;
 }
