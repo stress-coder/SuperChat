@@ -1,9 +1,6 @@
 services:
 
-  # ──────────────────────────────────────────────────
-  # MySQL 8.0 — persistent relational database
-  # ──────────────────────────────────────────────────
-  mysql-superchat:
+  mysql:
     image: mysql:8.0
     container_name: superchat-mysql
     environment:
@@ -12,7 +9,7 @@ services:
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - mysql-data:/var/lib/mysql
+      - ./mysql-data:/var/lib/mysql
     networks:
       - superchat-net
     healthcheck:
@@ -23,22 +20,19 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # ──────────────────────────────────────────────────
-  # Backend — compiled NestJS (production build)
-  # Not exposed to host — nginx proxies /api/ and /socket.io/ to it.
-  # DB_HOST is hardcoded to the MySQL service name — Docker DNS resolves it.
-  # ──────────────────────────────────────────────────
-  backend-superchat:
+  backend:
     build:
       context: ./backend
       dockerfile: .docker/Dockerfile
-      target: production
+      target: development
       args:
         NODE_VERSION: ${NODE_VERSION:-22}
     container_name: superchat-backend
+    volumes:
+      - ./backend/src:/app/src
     environment:
-      PORT: ${PORT:-3000}
-      DB_HOST: mysql-superchat
+      PORT: ${BACKEND_PORT:-3000}
+      DB_HOST: ${DB_HOST:-superchat-mysql}
       DB_PORT: ${DB_PORT:-3306}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -47,73 +41,66 @@ services:
       JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-7d}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
-      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
-      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
-      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
     depends_on:
-      mysql-superchat:
+      mysql:
         condition: service_healthy
     networks:
       - superchat-net
     restart: unless-stopped
 
-  # ──────────────────────────────────────────────────
-  # Frontend — React bundle served by nginx (production)
-  # VITE_* vars are baked into the JS bundle at build time — changing them
-  # requires a rebuild: docker compose -f docker-compose.prod.yml up --build
-  # SSL certs are volume-mounted — never baked into the image.
-  # Access: https://superchat.test (add "127.0.0.1 superchat.test" to /etc/hosts)
-  # ──────────────────────────────────────────────────
-  frontend-superchat:
+  frontend:
     build:
       context: ./frontend
       dockerfile: .docker/Dockerfile
-      target: production
+      target: development
       args:
         NODE_VERSION: ${NODE_VERSION:-22}
-        VITE_API_URL: ${VITE_API_URL}
-        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
     container_name: superchat-frontend
     volumes:
-      - ./frontend/.docker/ssl:/etc/nginx/ssl:ro
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - backend-superchat
+      - ./frontend/src:/app/src
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-/api}
+      VITE_SOCKET_URL: ${VITE_SOCKET_URL:-/}
     networks:
       - superchat-net
     restart: unless-stopped
 
-  # ──────────────────────────────────────────────────
-  # phpMyAdmin — MySQL web UI
-  # Access: http://localhost:${PMA_HOST_PORT}
-  # ──────────────────────────────────────────────────
-  phpmyadmin-superchat:
+  nginx:
+    image: nginx:alpine
+    container_name: superchat-nginx
+    volumes:
+      - ./frontend/.docker/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend/.docker/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "443:443"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - superchat-net
+    restart: unless-stopped
+
+  phpmyadmin:
     image: phpmyadmin:latest
     container_name: superchat-pma
     environment:
-      PMA_HOST: mysql-superchat
+      PMA_HOST: mysql
       PMA_PORT: 3306
     ports:
-      - "${PMA_HOST_PORT:-8080}:80"
+      - "${PMA_PORT:-8080}:80"
     networks:
       - superchat-net
     depends_on:
-      mysql-superchat:
+      mysql:
         condition: service_healthy
     restart: unless-stopped
 
-# ──────────────────────────────────────────────────
-# Named volumes — data persists across container restarts.
-# Run "docker compose -f docker-compose.prod.yml down -v" for a full reset.
-# ──────────────────────────────────────────────────
 volumes:
   mysql-data:
 
-# ──────────────────────────────────────────────────
-# Custom bridge network — Docker DNS resolves service names between containers.
-# ──────────────────────────────────────────────────
 networks:
   superchat-net:
     driver: bridge
