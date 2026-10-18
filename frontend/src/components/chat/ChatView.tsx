@@ -2,9 +2,8 @@ import { useMemo, useState } from 'react';
 import ConversationPanel from '@/components/chat/ConversationPanel';
 import EmptyConversation from '@/components/chat/EmptyConversation';
 import InboxPanel from '@/components/chat/InboxPanel';
-import type { Message } from '@/interfaces/message.interface';
+import { useChat } from '@/hooks/useChat';
 import type { User } from '@/interfaces/user.interface';
-import { mockConversations, mockMessages } from '@/mocks/chat.mock';
 import '@/assets/css/chat.css';
 
 interface ChatViewProps {
@@ -13,15 +12,23 @@ interface ChatViewProps {
 }
 
 /**
- * The whole /chat screen. Selection, search and the draft thread are held here
- * as local state on top of the sample data — nothing talks to the API yet, so
- * this is the one place a real chat store has to replace when it arrives.
+ * The whole /chat screen. Chat data comes from useChat; only the search term
+ * and the logout spinner are local UI state.
  */
 const ChatView = ({ user, onLogout }: ChatViewProps) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
+  const {
+    conversations,
+    isLoadingInboxes,
+    selectedId,
+    selectedConversation,
+    messages,
+    isLoadingThread,
+    select,
+    send,
+    startChat,
+  } = useChat(user?.id ?? '');
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -30,54 +37,23 @@ const ChatView = ({ user, onLogout }: ChatViewProps) => {
 
   const visibleConversations = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return mockConversations;
+    if (!term) return conversations;
 
-    return mockConversations.filter((conversation) =>
-      conversation.name.toLowerCase().includes(term),
-    );
-  }, [searchTerm]);
-
-  const selectedConversation = mockConversations.find(
-    (conversation) => conversation.id === selectedId,
-  );
-
-  const threadMessages = useMemo(
-    () => messages.filter((message) => message.conversationId === selectedId),
-    [messages, selectedId],
-  );
-
-  // Appending locally is what makes the composer feel real until the socket lands.
-  const handleSend = (text: string) => {
-    if (!selectedConversation) return;
-
-    const now = new Date();
-    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-    setMessages((current) => [
-      ...current,
-      {
-        id: `local-${now.getTime()}`,
-        conversationId: selectedConversation.id,
-        senderName: user?.name ?? 'You',
-        isOwn: true,
-        kind: 'text',
-        text,
-        time,
-        status: 'sent',
-        dayLabel: 'Today',
-      },
-    ]);
-  };
+    return conversations.filter((conversation) => conversation.name.toLowerCase().includes(term));
+  }, [conversations, searchTerm]);
 
   return (
     <div className={`chat${selectedConversation ? ' chat--thread-open' : ''}`}>
       <InboxPanel
         user={user}
         conversations={visibleConversations}
+        isLoading={isLoadingInboxes}
+        hasConversations={conversations.length > 0}
         selectedId={selectedId}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        onSelect={setSelectedId}
+        onSelect={select}
+        onStartChat={startChat}
         onLogout={() => void handleLogout()}
         isLoggingOut={isLoggingOut}
       />
@@ -86,9 +62,10 @@ const ChatView = ({ user, onLogout }: ChatViewProps) => {
         {selectedConversation ? (
           <ConversationPanel
             conversation={selectedConversation}
-            messages={threadMessages}
-            onBack={() => setSelectedId(null)}
-            onSend={handleSend}
+            messages={messages}
+            isLoading={isLoadingThread}
+            onBack={() => select(null)}
+            onSend={(text) => void send(text)}
           />
         ) : (
           <EmptyConversation />

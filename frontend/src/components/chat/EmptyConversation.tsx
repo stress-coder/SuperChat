@@ -7,7 +7,7 @@ const EmptyConversation = () => {
       <MessagesSquare className="chat-empty__icon" aria-hidden="true" />
       <h2 className="chat-empty__title">Select a chat to start messaging</h2>
       <p className="chat-empty__text">
-        Pick a conversation from the list, or search for someone you have not talked to yet.
+        Pick a conversation from the list, or start a new one with a user ID.
       </p>
     </div>
   );
