@@ -1,5 +1,8 @@
-import { useState } from 'react';
-import Button from '@/components/ui/Button';
+import { useMemo, useState } from 'react';
+import ConversationPanel from '@/components/chat/ConversationPanel';
+import EmptyConversation from '@/components/chat/EmptyConversation';
+import InboxPanel from '@/components/chat/InboxPanel';
+import { useChat } from '@/hooks/useChat';
 import type { User } from '@/interfaces/user.interface';
 import '@/assets/css/chat.css';
 
@@ -9,32 +12,65 @@ interface ChatViewProps {
 }
 
 /**
- * Placeholder landing spot after a successful sign-in — just enough to prove the
- * integration works end to end. The real chat UI replaces this.
+ * The whole /chat screen. Chat data comes from useChat; only the search term
+ * and the logout spinner are local UI state.
  */
 const ChatView = ({ user, onLogout }: ChatViewProps) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const {
+    conversations,
+    isLoadingInboxes,
+    selectedId,
+    selectedConversation,
+    messages,
+    isLoadingThread,
+    select,
+    send,
+    startChat,
+  } = useChat(user?.id ?? '');
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await onLogout();
   };
 
+  const visibleConversations = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return conversations;
+
+    return conversations.filter((conversation) => conversation.name.toLowerCase().includes(term));
+  }, [conversations, searchTerm]);
+
   return (
-    <div className="chat-demo">
-      <h1 className="chat-demo__title">Successfully loging</h1>
+    <div className={`chat${selectedConversation ? ' chat--thread-open' : ''}`}>
+      <InboxPanel
+        user={user}
+        conversations={visibleConversations}
+        isLoading={isLoadingInboxes}
+        hasConversations={conversations.length > 0}
+        selectedId={selectedId}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onSelect={select}
+        onStartChat={startChat}
+        onLogout={() => void handleLogout()}
+        isLoggingOut={isLoggingOut}
+      />
 
-      {user && (
-        <p className="chat-demo__user">
-          Signed in as <span className="chat-demo__email">{user.name}</span> (@{user.username})
-        </p>
-      )}
-
-      <div className="chat-demo__actions">
-        <Button type="button" onClick={() => void handleLogout()} isLoading={isLoggingOut}>
-          Log out
-        </Button>
-      </div>
+      <section className="chat__thread">
+        {selectedConversation ? (
+          <ConversationPanel
+            conversation={selectedConversation}
+            messages={messages}
+            isLoading={isLoadingThread}
+            onBack={() => select(null)}
+            onSend={(text) => void send(text)}
+          />
+        ) : (
+          <EmptyConversation />
+        )}
+      </section>
     </div>
   );
 };
